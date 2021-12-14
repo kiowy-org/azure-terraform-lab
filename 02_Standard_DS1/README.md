@@ -113,9 +113,9 @@ resource "azurerm_security_group" "apache_server_sg" {
 }
 ```
 
-Vous devez ensuite attribuer cette règle à l'instance Standard_DS1_v2. Pour cela, il faut référencer le `SecurityGroup` par son attribut `id` dans l'argument `vpc_security_group_ids`de votre instance Standard_DS1_v2.
+Vous devez ensuite attribuer cette règle à l'instance Standard_DS1_v2. Pour cela, il faut référencer le `SecurityGroup` par son attribut `id` dans l'argument `network_interface_ids`de votre instance Standard_DS1_v2.
 
-Modifiez donc votre instance en conséquence, à noter que l'argument `vpc_security_group_ids` attend une liste d'id de `SecurityGroup`.
+Modifiez donc votre instance en conséquence, à noter que l'argument `network_interface_ids` attend une liste d'id de `SecurityGroup`.
 
 > Indice : On peut définir une liste avec la syntaxe `[ELEM1, ELEM2, ...]`
 
