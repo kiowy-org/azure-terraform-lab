@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "apache_server" {
   name     = "kiowy-tp2-resources"
-  location = "West Europe"
+  location = "France Central"
 }
 
 resource "azurerm_storage_account" "apache_server_sa" {
@@ -121,7 +121,7 @@ provisioner "remote-exec" {
     "sudo apt-get install -y apache2",
     "sudo systemctl start apache2",
     "sudo systemctl enable apache2"
-    "sudo echo "<h1>Hello Terraform</h1>" > /var/www/html/index.html",
+    "sudo echo '<h1>Hello Terraform</h1>' > /var/www/html/index.html",
   ]
 
   connection {

@@ -17,41 +17,41 @@ Ensuite, éditez `main.tf` afin que le tag `Name` de l'instance EC2 soit `<prefi
 Afin de rendre notre code plus flexible, nous souhaitons laisser le choix dans la région, mais pas trop non plus ! RGPD oblige, il faut que la région soit parmis les suivantes :
 
 ```
+francecentral
+francesouth
 northeurope
 swedencentral
 uksouth
 westeurope
-francesouth
-francecentral
 ```
 
 Déclarez la variable `azure_region`, avec comme paramètre par défaut la région `westeurope` et n'acceptant que les régions ci-dessus (indice : [il existe la fonction `contains`](https://www.terraform.io/docs/language/functions/contains.html)).
 
-Ajoutez ensuite la référence à cette variable dans l'argument `region` du provider AWS.
+Ajoutez ensuite la référence à cette variable dans l'argument `location` du provider AZURE.
 
-#### 4. Spécifier les AMIs en fonction des régions
+#### 4. Spécifier le paramètres region en fonction de la location
 Pour simplifier la vie des utilisateurs de notre code Terraform (ou la notre...), nous souhaitons fixer les AMIs à utiliser. Cependant sur AWS, l'AMI ID dépend de la région.
 
-Nous allons utiliser une `local` afin de spécifier la liste des AMI par région grâce à une map.
+Nous allons utiliser une `local` afin de spécifier la liste des locations par région grâce à une map.
 
 ```
 locals {
-    amis_by_region = {
-        "northeurope"           = "ami-0f617e4136f03b9ad"
-        "swedencentral"         = "ami-0d21c64d5074a949a"
-        "uksouth"               = "ami-008c11e98baa0896c"
-        "westeurope"            = "ami-06d79c60d7454e2af"
-        "francesouth"           = "ami-01cf7e0f481ff30b4"
-        "francecentrale"        = "ami-0b4b0a5bd04aec558"
+    location_by_region = {
+        "francecentrale"        = "France Central"
+        "francesouth"           = "France South"
+        "northeurope"           = "North Europe"
+        "swedencentral"         = "Sweden Central"
+        "uksouth"               = "UK South"
+        "westeurope"            = "West Europe"
     }
 }
 ```
 
-Afin que terraform "choissise" la bonne AMI, vous devez définir une autre `local` basée sur la variable `azure_region`. Vous pourrez ensuite référencer cette `local` dans l'argument `ami` de l'instance Standard_DS1.
+Afin que terraform "choissise" la bonne région, vous devez définir une autre `local` basée sur la variable `azure_region`. Vous pourrez ensuite référencer cette `local` dans l'argument `location` de les instances de ressources de votre cluster.
 
 #### 5. Afficher l'IP Publique de l'instance
 
-Afin d'afficher l'IP de notre instance EC2, nous allons ajouter un output. Créez un fichier `outputs.tf`. Ajoutez un `output` appelé `public_ip` qui affiche l'argument `public_ip` de l'instance Standard_DS1.
+Afin d'afficher l'IP de notre instance Standard DS1 v2, nous allons ajouter un output. Créez un fichier `outputs.tf`. Ajoutez un `output` appelé `public_ip` qui affiche l'argument `public_ip` de l'instance Standard_DS1_v2.
 
 #### 6. Ajouter des variables et éxecuter
 
