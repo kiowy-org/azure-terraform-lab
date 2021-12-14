@@ -111,7 +111,6 @@ resource "azurerm_virtual_machine" "apache_server_vm" {
   }
 
   tags = {
-    environment = "staging"
     Name = "Ben"
   }
 }
