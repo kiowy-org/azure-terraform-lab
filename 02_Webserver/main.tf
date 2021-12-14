@@ -3,14 +3,6 @@ resource "azurerm_resource_group" "apache_server" {
   location = "France Central"
 }
 
-resource "azurerm_storage_account" "apache_server_sa" {
-  name                      = "tp2_sa"
-  resource_group_name       = azurerm_resource_group.apache_server.name
-  location                  = azurerm_resource_group.apache_server.location
-  account_tier              = "Standard"
-  account_replication_type  = "DRS"
-}
-
 resource "azurerm_virtual_network" "apache_server_vnet" {
   name                = "kiowy-tp2-network"
   resource_group_name = azurerm_resource_group.apache_server.name
@@ -26,41 +18,41 @@ resource "azurerm_subnet" "subnet" {
 }
 
 resource "azurerm_public_ip" "apache_server_pip" {
-  name                  = "tp2_public_ip"
-  resource_group_name   = azurerm_resource_group.apache_server.name
-  location              = azurerm_resource_group.apache_server.location
-  allocation_method     = "Dynamic"
-  domain_name_label     = "azure-tf-lab.kiowy.net"
+  name                = "tp2_public_ip"
+  resource_group_name = azurerm_resource_group.apache_server.name
+  location            = azurerm_resource_group.apache_server.location
+  allocation_method   = "Dynamic"
+  domain_name_label   = "azure-tf-lab-kiowy-net"
 }
 
 
-resource "azurerm_security_group" "apache_server_sg" {
-  name                          = "tp2-sg"
-  resource_group_name           = azurerm_resource_group.apache_server.name
-  location                      = azurerm_resource_group.apache_server.location
+resource "azurerm_network_security_group" "apache_server_sg" {
+  name                = "tp2-sg"
+  resource_group_name = azurerm_resource_group.apache_server.name
+  location            = azurerm_resource_group.apache_server.location
 
   security_rule {
-    name                        = "HTTP"
-    prority                     = 100
-    direction                   = "Inbound"
-    access                      = "Allow"
-    protocol                    = "Tcp"
-    source_port_range           = "*"
-    destination_port_range      = "80"
-    source_address_prefix       = "*"
-    destination_address_prefix  = "*"
+    name                       = "HTTP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 
   security_rule {
-      name                        = "SSH"
-      prority                     = 101
-      direction                   = "Inbound"
-      access                      = "Allow"
-      protocol                    = "Tcp"
-      source_port_range           = "*"
-      destination_port_range      = "22"
-      source_address_prefix       = "*"
-      destination_address_prefix  = "*"
+    name                       = "SSH"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 }
 
@@ -77,57 +69,35 @@ resource "azurerm_network_interface" "apache_server_nic" {
   }
 }
 
-resource "azurerm_virtual_machine" "apache_server_vm" {
-  name                  = "tp2-vm"
-  location              = azurerm_resource_group.apache_server.location
-  resource_group_name   = azurerm_resource_group.apache_server.name
-  vm_size               = "Standard_DS1_v2"
-  network_interface_ids = ["${azurerm_network_interface.apache_server_nic.id}"]
-  delete_os_disk_on_termination = true
-  delete_data_disks_on_termination = true
+resource "azurerm_linux_virtual_machine" "apache_server_vm" {
+  name                = "tp2-vm"
+  location            = azurerm_resource_group.apache_server.location
+  resource_group_name = azurerm_resource_group.apache_server.name
+  size                = "Standard_DS1_v2"
 
-  storage_image_reference {
+  admin_username                  = "tp2admin"
+  admin_password                  = "IsItWorking?"
+  disable_password_authentication = false
+
+  network_interface_ids = [
+    azurerm_network_interface.apache_server_nic.id
+  ]
+
+  source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
     version   = "latest"
   }
 
-  storage_os_disk {
-    name              = "tp2_osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
-  os_profile {
-    computer_name  = "tf_tp2"
-    admin_username = "tp2admin"
-    admin_password = "IsItWorking?"
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
+  custom_data = base64encode(file("./apache_script.sh"))
 
   tags = {
     Name = "Ben"
-  }
-}
-
-provisioner "remote-exec" {
-  inline = [
-    "sudo apt-get update",
-    "sudo apt-get install -y apache2",
-    "sudo systemctl start apache2",
-    "sudo systemctl enable apache2"
-    "sudo echo '<h1>Hello Terraform</h1>' > /var/www/html/index.html",
-  ]
-
-  connection {
-    protocol    = "ssh"
-    host        = azurerm_public_ip.apache_server_pip.fqdn
-    user        = "tp2admin"
-    private_key = "IsItWorking?"
   }
 }

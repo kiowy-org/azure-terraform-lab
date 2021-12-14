@@ -4,7 +4,7 @@ Dans cet exercice, nous allons déployer une infrastructure AZURE plus conséque
 ## Partie 1
 **N'oubliez pas de supprimer l'infrastructure crée lors du TP précédent via `terraform destroy`**
 
-#### 1. Mise en place du projet
+### 1. Mise en place du projet
 Créez un nouveau dossier qui servira de base à votre projet terraform. Dans ce dossier, créez un fichier `terraform.tf` avec le contenu suivant :
 ```hcl
 # terraform.tf
@@ -22,24 +22,15 @@ Créez un fichier `providers.tf` avec le contenu suivant :
 ```hcl
 # providers.tf
 provider "azurerm" {
-    region = "eu-west"
-    access_key = "<votre-access-key>"
-    secret_key = "<votre-secret-key"
+  features {}
 }
 ```
 Enfin, ajoutez un fichier `main.tf` vierge pour le moment.
 
-#### 2. Création de l'instance Standard_DS1_v2
+### 2. Création de l'instance Standard_DS1_v2
 Nous allons tout d'abord ajouter à notre projet une instance `Standard_DS1_v2`.
 
-Ajoutez une ressource de type `azurerm_virtual_machine` dans le fichier `main.tf` grâce aux informations ci-dessus, ainsi qu'à la [documentation terraform correspondante](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_machine).
-
-> **Suppression des données** : Les instances de machine Azure conservent leurs données par défaut une fois le processus terminer. Dans notre exemple se n'est pas nécéssaire, nous allons donc spécifier :
-> ```hcl
->   delete_os_disk_on_termination = true
->   delete_data_disks_on_termination = true
-> ```
-> Ces paramêtres définisse la suppression des données du disque de l'os et des disques des données associées lors de la terminaison de l'instance.
+Ajoutez une ressource de type `azurerm_linux_virtual_machine` dans le fichier `main.tf` grâce aux informations ci-dessus, ainsi qu'à la [documentation terraform correspondante](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine).
 
 Pour valider, vérifiez que terraform va bien créer votre instance grâce à la commande `terraform plan`.
 *(Si terraform râle, rappelez vous les commandes du TP précédent pour INITialiser le projet...)*
