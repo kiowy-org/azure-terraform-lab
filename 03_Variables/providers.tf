@@ -1,4 +1,4 @@
 # providers.tf
-provider "aws" {
-  region = ""
+provider "azurerm" {
+  region = "francecentrale"
 }
