@@ -11,32 +11,28 @@ provider "azurerm" {
   features {}
 }
 
+resource "random_pet" "name" {
+}
+
 resource "azurerm_resource_group" "example" {
-  name     = "example-resources"
-  location = "West Europe"
+  name     = "${random_pet.name.id}-terraform"
+  location = "France Central"
+}
+
+resource "azurerm_storage_account" "example" {
+  name                     = "${replace(random_pet.name.id, "-", "")}kiowy"
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags = {
+    owner = random_pet.name.id
+  }
 }
 
 resource "azurerm_storage_container" "example" {
-  name                  = "test.tf.formation.kiowy.com"
+  name                  = "vhds"
   storage_account_name  = azurerm_storage_account.example.name
   container_access_type = "private"
-}
-
-resource "azurerm_storage_blob" "example" {
-  name                   = "blob.zip"
-  storage_account_name   = azurerm_storage_account.example.name
-  storage_container_name = azurerm_storage_container.example.name
-  type                   = "Block"
-  source                 = "some-local-blob.file.zip"
-}
-
-# La configuration de base de la formation AWS
-resource "azurerm_resource_group" "monbucket" {
-  bucket = "test.tf.formation.kiowy.com"
-  acl    = "public-read"
-
-  tags = {
-    Name  = "Mon Bucket"
-    Owner = "Benjamin"
-  }
 }
