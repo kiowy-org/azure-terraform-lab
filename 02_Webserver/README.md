@@ -5,121 +5,68 @@ Dans cet exercice, nous allons déployer une infrastructure AZURE plus conséque
 **N'oubliez pas de supprimer l'infrastructure crée lors du TP précédent via `terraform destroy`**
 
 ### 1. Mise en place du projet
-Créez un nouveau dossier qui servira de base à votre projet terraform. Dans ce dossier, créez un fichier `terraform.tf` avec le contenu suivant :
-```hcl
-# terraform.tf
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=2.46.0"
-    }
-  }
-}
-```
-
-Créez un fichier `providers.tf` avec le contenu suivant :
-```hcl
-# providers.tf
-provider "azurerm" {
-  features {}
-}
-```
-Enfin, ajoutez un fichier `main.tf` vierge pour le moment.
+Ce dossier servira de base à votre projet terraform. Dans ce dossier, vous trouverez les fichiers `terraform.tf`, `providers.tf` et `outputs.tf` déjà remplis (*n'oubliez pas d'ajouter vos identifiants au provider*). Vous allez ajouter vos ressources dans le fichier `main.tf`.
 
 ### 2. Création de l'instance Standard_DS1_v2
 Nous allons tout d'abord ajouter à notre projet une instance `Standard_DS1_v2`.
+Sur Azure, une instance de VM doit forcément être créé au sein d'un `Virtual Network`. Nous allons donc crééer les ressources correspondantes.
 
-Ajoutez une ressource de type `azurerm_linux_virtual_machine` dans le fichier `main.tf` grâce aux informations ci-dessus, ainsi qu'à la [documentation terraform correspondante](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine).
+Dans le `main.tf` ajoutez une ressource [`azurerm_virtual_network`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network). Définissez les options `name`, `resource_group_name`, `location` et `address_space` (sur `10.0.0.0/16` par exemple).
 
-Pour valider, vérifiez que terraform va bien créer votre instance grâce à la commande `terraform plan`.
+Ajoutez ensuite une ressource [`azurerm_subnet`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet), en définissant les options `name`, `resource_group_name`, `virtual_network_name` et enfin `address_prefixes` (sur `10.0.2.0/24` par exemple).
+
+Pour valider, vérifiez que terraform va bien créer votre network grâce à la commande `terraform plan`.
 *(Si terraform râle, rappelez vous les commandes du TP précédent pour INITialiser le projet...)*
 
-Si le plan vous convient, créez l'instance avec `terraform apply`.
+Si le plan vous convient, créez les ressources avec `terraform apply`.
 
-#### 3. Un peu de personalisation
-Pour l'instant, l'instance que vous venez de créer est difficilement identifiable. Pour lui ajouter un nom, vous pouvez ajouter un tag `Name` à votre ressource.
+Avant de crééer notre VM, nous devons tout d'abord ajouter une interface réseau. Créez une ressource [`azurerm_network_interface`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface) en définissant les options `name`, `resource_group_name` et `location`. Ajoutez également un block `ip_configuration` avec les champs `name`, `subnet_id`, `private_ip_address_allocation` à la valeur `Dynamic`.
 
-Vérifiez que terraform va uniquement modifier votre ressource (symbole `~`) et appliquez les changements avec `terraform apply`
+Enfin, ajoutez une ressource de type [`azurerm_linux_virtual_machine`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine) dans le fichier `main.tf` grâce aux informations ci-dessous.
 
-#### 4. Installons notre serveur web
-**Plusieurs solutions existent pour configurer notre instance** : générer une image AMI avec sa configuration, utiliser un outil comme Ansible par exemple. Ici, nous allons spécifier un script à éxecuter au démarrage de notre instance, via l'attribut `inline`.
-
-
-```shell
-#!/bin/bash
-sudo apt-get update
-sudo apt-get install -y apache2
-sudo systemctl start apache2
-sudo systemctl enable apache2
-sudo echo "<h1>Hello devopssec</h1>" > /var/www/html/index.html
+Vous devez définir les paramètres requis classiques, mais vous devrez porter une attention particulière au paramètre `size` qui aura la valeur `Standard_DS1_v2`. Vérifiez bien le contenu des champs requis. Pour le block `os_disk`, vous pouvez utiliser les options suivantes :
+```
+caching               = "ReadWrite"
+storage_account_type  = "Standard_LRS"
+```
+Le block `source_image_reference` doit également être présent avec la configuration suivante :
+```
+publisher = "Canonical"
+offer     = "UbuntuServer"
+sku       = "16.04-LTS"
+version   = "latest"
 ```
 
-Ajoutez le script ci-dessus à l'instance grâce à l'attribut `inline` sous la forme d'un tableau contenant une chaine de caract. Le HCL support la notation [Heredoc](https://fr.wikipedia.org/wiki/Here_document).
-```hcl
-# ...  
-provisioner "remote-exec" {
-  inline = [
-    "sudo apt-get update",
-    "sudo apt-get install -y apache2",
-    "sudo systemctl start apache2",
-    "sudo systemctl enable apache2"
-    "sudo echo "<h1>Hello Terraform</h1>" > /var/www/html/index.html",
-  ]
-...}
-```
+Vérifiez votre code (`validate`), validez le plan et déployez votre infrastructure. Si tout va bien, votre VM est en ligne !
+
+### 3. Ajouter une IP externe
+Le but de notre TP est de créer un serveur web, il faut donc que notre VM soit accessible depuis l'extérieur. Nous avons donc besoin d'une IP externe !
+
+Créez une ressource [`azurerm_public_ip`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip). Je vous laisse le soin de trouver les bons arguments, il faut simplement que votre IP soit `Static` et `Regional`.
+
+Vous devez ensuite assigner cette IP à votre VM, comment spécifier cela ? (indice : ça concerne [`azurerm_network_interface`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface))
+
+Vérifiez que terraform va bien créer votre IP et modifier votre ressource `azurerm_network_interface` (symbole `~`) et appliquez les changements avec `terraform apply`                  
+
+### 4. Installons notre serveur web
+**Plusieurs solutions existent pour configurer notre instance** : générer une image avec sa configuration, utiliser un outil comme Ansible par exemple. Ici, nous allons donner un script à Azure qui sera exécuté à la création de l'instance.
+
+Le script est présent dans le dossier du TP (`./apache_script.sh`). Étudiez la documentation de l'argument `custom_data` de [`azurerm_linux_virtual_machine`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine) afin de passer ce script à l'instance.
 
 Validez et déployez les changements (vous connaissez les commandes désormais ;))
 
-Voilà ! Votre instance EC2 est déployée, cependant, il manque encore quelques éléments afin d'accéder à votre page web depuis internet.
+Voilà ! Votre instance est déployée, cependant, il manque encore quelques éléments afin d'accéder à votre page web depuis internet.
 
 ## Partie 2
 
-#### 1. Configuration réseau
-Afin que le traffic depuis internet vers notre instance sur le port 80 puisse passer, nous allons créer un `SecurityGroup`.
+### 1. Configuration réseau
+Afin que le traffic depuis internet vers notre instance sur le port 80 puisse passer, nous allons créer un [`azurerm_network_security_group`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group).
 
-Ajoutez la ressource suivante à votre projet :
-```hcl
-resource "azurerm_security_group" "apache_server_sg" {
-  name                          = "tp2-sg"
-  resource_group_name           = azurerm_resource_group.apache_server.name
-  location                      = azurerm_resource_group.apache_server.location
+Quelle configuration écrire afin d'autoriser le traffic entrant sur le port 80 ?
 
-  security_rule {
-    name                        = "HTTP"
-    prority                     = 100
-    direction                   = "Inbound"
-    access                      = "Allow"
-    protocol                    = "Tcp"
-    source_port_range           = "*"
-    destination_port_range      = "80"
-    source_address_prefix       = "*"
-    destination_address_prefix  = "*"
-  }
+Exécutez vos modifications, vérifiez ce que terraform va réaliser afin de prendre en compte vos modifications.
 
-  security_rule {
-      name                        = "SSH"
-      prority                     = 101
-      direction                   = "Inbound"
-      access                      = "Allow"
-      protocol                    = "Tcp"
-      source_port_range           = "*"
-      destination_port_range      = "22"
-      source_address_prefix       = "*"
-      destination_address_prefix  = "*"
-  }
-}
-```
-
-Vous devez ensuite attribuer cette règle à l'instance Standard_DS1_v2. Pour cela, il faut référencer le `SecurityGroup` par son attribut `id` dans l'argument `network_interface_ids`de votre instance Standard_DS1_v2.
-
-Modifiez donc votre instance en conséquence, à noter que l'argument `network_interface_ids` attend une liste d'id de `SecurityGroup`.
-
-> Indice : On peut définir une liste avec la syntaxe `[ELEM1, ELEM2, ...]`
-
-Exécutez vos modifications, vérifiez ce que terraform réaliser afin de prendre en compte vos modifications.
-
-#### 2. Accès à l'instance
+### 2. Accès à l'instance
 
 Votre instance est créée avec le bon groupe, il ne vous reste plus qu'à y accéder. Pour cela vous avez besoin de l'IP publique. 
 

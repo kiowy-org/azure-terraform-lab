@@ -3,7 +3,7 @@
 * [Cli AZURE](https://docs.microsoft.com/fr-fr/cli/azure/install-azure-cli)
 * Git
 * Un shell
-* Un éditeur de code (VSCode)
+* Un éditeur de code ([VSCode](https://code.visualstudio.com/))
 
 ## Installation
 Terraform est livré sous la forme d'un binaire unique, disponible pour de nombreux environnements sur https://www.terraform.io/downloads.html

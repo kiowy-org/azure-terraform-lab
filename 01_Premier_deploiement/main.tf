@@ -2,20 +2,21 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.46.0"
+      version = "2.89.0"
     }
   }
 }
 
 provider "azurerm" {
   features {}
+  # N'oubliez pas vos identifiants !
 }
 
 resource "random_pet" "name" {
 }
 
 resource "azurerm_resource_group" "example" {
-  name     = "${random_pet.name.id}-terraform"
+  name     = "${random_pet.name.id}-exo1"
   location = "France Central"
 }
 
