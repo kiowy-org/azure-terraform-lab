@@ -29,7 +29,4 @@ override.tf.json
 # example: *tfplan*
 
 #Exercices
-03_Variables/
-04_Modules/
-05_Provisioner/
 06_Final/
