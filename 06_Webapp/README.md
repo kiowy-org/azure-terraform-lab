@@ -18,38 +18,35 @@ Ensuite, nous avons besoin d'un subnet, ajoutez le avec un CIDR de `10.0.1.0/24`
 
 Voilà pour le réseau ! N'ouvbliez pas d'exposer quelques informations (id de vnet, de subnets...) depuis votre module, nous pourrions en avoir besoin ailleurs !
 
-
-### 2. Storage Account pour stocker nos sources
-Nous souhaitons que nos serveurs web puissent scaler (grâce à l'auto scaling group !). Nous devons donc trouver un moyen d'istaller les sources de notre application dès qu'un nouveau serveur démarre !
-
-Plusieurs possibilités existent, proposez une stratégie pour réaliser cela avant de l'implémenter !
-
-### 3. Créer notre pool de serveurs web
+### 2. Créer notre pool de serveurs web
 Attaquons nous à la partie la plus longue ! Les serveurs web. Le principe est simple et repose sur deux composants : un load balancer qui dirige le traffic depuis internet vers notre pool de machine (appelé availability set). Ce pool sera géré par une variable du code Terraform.
 
 Commencons par déclarer notre `availability_set`. 
 
-On va ensuite créer un second `security_group` pour gérer le traffic atteignant nos VM. On va autoriser toute les sorties, mais seulement le port 22 en entrée, ainsi que le traffic provenant du load balancer.
+On va ensuite créer un second `azurerm_network_security_group` pour gérer le traffic atteignant nos VM. On va autoriser toute les sorties, mais seulement les port 22 et 80 en entrée, ainsi que le traffic provenant du load balancer.
 ```hcl
-egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 
-  ingress {
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port       = <PORT APP>
-    to_port         = <PORT APP>
-    protocol        = "tcp"
-    security_groups = [<ID DU SECURITY GROUP DU LOAD BALANCER>]
+  security_rule {
+    name                       = "SSH"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 ```
 
