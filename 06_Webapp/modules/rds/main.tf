@@ -1,7 +1,7 @@
 resource "azurerm_mysql_server" "mysql-server" {
   name                = "mysqlserver"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  resource_group_name = var.rg_name
 
   administrator_login          = "mysqladmin"
   administrator_login_password = "LetMeIn!"
@@ -21,16 +21,16 @@ resource "azurerm_mysql_server" "mysql-server" {
 
 resource "azurerm_storage_account" "db-sa" {
   name                     = "dbsa"
-  resource_group_name      = azurerm_resource_group.main.name
-  location                 = azurerm_resource_group.main.location
+  resource_group_name      = var.rg_name
+  location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
 resource "azurerm_sql_database" "database" {
   name                = "database"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  server_name         = azurerm_sql_server.mysql-server.name
+  resource_group_name = var.rg_name
+  location            = var.location
+  server_name         = azurerm_mysql_server.mysql-server.name
 }
 

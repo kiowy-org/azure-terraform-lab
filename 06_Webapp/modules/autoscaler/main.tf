@@ -1,8 +1,8 @@
-resource "azurerm_monitor_autoscale_setting" "" {
+resource "azurerm_monitor_autoscale_setting" "autoscaler_setting" {
     name                = "autoscalerSettings"
-    resource_group_name = azurerm_resource_group.example.name
-    location            = azurerm_resource_group.example.location
-    target_resource_id  = azurerm_linux_virtual_machine_scale_set.main_vm.id
+    resource_group_name = var.rg_name
+    location            = var.location
+    target_resource_id  = var.machine_id
 
     profile {
       name = "autoScaleProfile"
@@ -18,7 +18,7 @@ resource "azurerm_monitor_autoscale_setting" "" {
         # scale up alarm
         metric_trigger {
           metric_name        = "Percentage CPU"
-          metric_resource_id = azurerm_linux_virtual_machine_scale_set.main_vm.id
+          metric_resource_id = var.machine_id
           time_grain         = "PT1M"
           statistic          = "Average"
           time_window        = "PT5M"
@@ -46,7 +46,7 @@ resource "azurerm_monitor_autoscale_setting" "" {
       rule {
         metric_trigger {
           metric_name        = "Percentage CPU"
-          metric_resource_id = azurerm_linux_virtual_machine_scale_set.main_vm.id
+          metric_resource_id = var.machine_id
           time_grain         = "PT1M"
           statistic          = "Average"
           time_window        = "PT5M"

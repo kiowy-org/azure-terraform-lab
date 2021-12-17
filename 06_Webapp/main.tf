@@ -9,6 +9,31 @@ resource "azurerm_resource_group" "main" {
 #TODO Use modules
 module "vpc" {
   source = "./modules/vpc"
+
+  rg_name    = azurerm_resource_group.main.name
+  location   = azurerm_resource_group.main.location
+}
+
+module "rds" {
+  source = "./modules/rds"
+
+  rg_name    = azurerm_resource_group.main.name
+  location   = azurerm_resource_group.main.location
+}
+
+module "autoscaler" {
+  source = "./modules/autoscaler"
+
+  rg_name    = azurerm_resource_group.main.name
+  location   = azurerm_resource_group.main.location
+  machine_id = azurerm_linux_virtual_machine_scale_set.main_vm.id
+}
+
+module "lb" {
+  source = "./modules/lb"
+
+  rg_name    = azurerm_resource_group.main.name
+  location   = azurerm_resource_group.main.location
 }
 
 #TODO Récupérer Ubuntu 20.04 LTS
@@ -40,7 +65,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "main_vm" {
     ip_configuration {
       name      = "internal"
       primary   = true
-      subnet_id = azurerm_subnet.internal.id
+      subnet_id = module.vpc.internal_subnet_id
     }
   }
 }
