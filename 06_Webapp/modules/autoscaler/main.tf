@@ -25,7 +25,7 @@ resource "azurerm_monitor_autoscale_setting" "autoscaler_setting" {
           time_aggregation   = "Average"
           operator           = "GreaterThan"
           threshold          = 75
-          metric_namespace   = "microsoft.compute/linuxvirtualmachinescalesets"
+          metric_namespace   = "Microsoft.Compute/virtualMachineScaleSets"
                 
           dimensions {
             name     = "AppName"

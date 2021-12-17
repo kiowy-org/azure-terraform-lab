@@ -10,15 +10,15 @@ resource "azurerm_resource_group" "main" {
 module "vpc" {
   source = "./modules/vpc"
 
-  rg_name    = azurerm_resource_group.main.name
-  location   = azurerm_resource_group.main.location
+  rg_name  = azurerm_resource_group.main.name
+  location = azurerm_resource_group.main.location
 }
 
 module "rds" {
   source = "./modules/rds"
 
-  rg_name    = azurerm_resource_group.main.name
-  location   = azurerm_resource_group.main.location
+  rg_name  = azurerm_resource_group.main.name
+  location = azurerm_resource_group.main.location
 }
 
 module "autoscaler" {
@@ -32,19 +32,20 @@ module "autoscaler" {
 module "lb" {
   source = "./modules/lb"
 
-  rg_name    = azurerm_resource_group.main.name
-  location   = azurerm_resource_group.main.location
+  rg_name  = azurerm_resource_group.main.name
+  location = azurerm_resource_group.main.location
 }
 
 #TODO Récupérer Ubuntu 20.04 LTS
 resource "azurerm_linux_virtual_machine_scale_set" "main_vm" {
-  name                = "base_vm"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  sku                 = "Standard_DS1_v2"
-  instances           = 1
-  admin_username      = "adminuser"
-  admin_password      = "IsItWorking?"
+  name                            = "scs"
+  resource_group_name             = azurerm_resource_group.main.name
+  location                        = azurerm_resource_group.main.location
+  sku                             = "Standard_DS1_v2"
+  instances                       = 1
+  admin_username                  = "adminuser"
+  admin_password                  = "IsItWorking?"
+  disable_password_authentication = false
 
   source_image_reference {
     publisher = "Canonical"
@@ -63,9 +64,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "main_vm" {
     primary = true
 
     ip_configuration {
-      name      = "internal"
-      primary   = true
-      subnet_id = module.vpc.internal_subnet_id
+      name                                   = "internal"
+      primary                                = true
+      subnet_id                              = module.vpc.internal_subnet_id
+      load_balancer_backend_address_pool_ids = [module.lb.lb_pool_id]
     }
   }
 }

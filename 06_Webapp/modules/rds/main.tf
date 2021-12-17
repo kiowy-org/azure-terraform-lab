@@ -1,5 +1,5 @@
 resource "azurerm_mysql_server" "mysql-server" {
-  name                = "mysqlserver"
+  name                = "mysqlserver-${var.rg_name}"
   location            = var.location
   resource_group_name = var.rg_name
 
@@ -15,22 +15,14 @@ resource "azurerm_mysql_server" "mysql-server" {
   geo_redundant_backup_enabled      = false
   infrastructure_encryption_enabled = false
   public_network_access_enabled     = true
-  ssl_enforcement_enabled           = true
-  ssl_minimal_tls_version_enforced  = "TLS1_2"
+  ssl_enforcement_enabled           = false
 }
 
-resource "azurerm_storage_account" "db-sa" {
-  name                     = "dbsa"
-  resource_group_name      = var.rg_name
-  location                 = var.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-}
-
-resource "azurerm_sql_database" "database" {
+resource "azurerm_mysql_database" "database" {
   name                = "database"
   resource_group_name = var.rg_name
-  location            = var.location
   server_name         = azurerm_mysql_server.mysql-server.name
+  charset             = "utf8" 
+  collation           = "utf8_unicode_ci" 
 }
 
